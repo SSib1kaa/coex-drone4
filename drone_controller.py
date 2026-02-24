@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""COEX Drone 4 Autonomous Flight Controller with Gripper and Obstacle Avoidance"""
-
 import sys
 import math
 import time
@@ -10,7 +7,6 @@ from dataclasses import dataclass
 from typing import List, Tuple, Optional
 import numpy as np
 
-# Simulated COEX Drone 4 MAVLink Communication (dronekit-python compatible)
 
 class DroneState(Enum):
     """Drone operational states"""
@@ -57,21 +53,20 @@ class Position3D:
 class Obstacle:
     """Detected obstacle in 3D space"""
     position: Position3D
-    radius: float  # Detection radius
-    danger_level: float  # 0.0 to 1.0
+    radius: float 
+    danger_level: float 
 
 class SensorArray:
     """Ultrasonic and camera sensor fusion for obstacle detection"""
     
     def __init__(self):
         self.obstacles: List[Obstacle] = []
-        self.detection_range = 2.0  # 2 meters
-        self.min_safe_distance = 0.5  # 50 cm minimum
+        self.detection_range = 2.0 
+        self.min_safe_distance = 0.5 
     
     def scan(self, drone_pos: Position3D) -> List[Obstacle]:
         """Simulate obstacle detection"""
-        # In real implementation, this would read from ultrasonic sensors
-        # For simulation, we generate synthetic obstacles
+
         self.obstacles = []
         return self.obstacles
     
@@ -88,8 +83,8 @@ class GripperController:
     
     def __init__(self):
         self.state = GripperState.OPEN
-        self.servo_angle = 0  # 0-180 degrees
-        self.grip_force = 0  # 0-100%
+        self.servo_angle = 0  
+        self.grip_force = 0 
         self.object_detected = False
     
     def close(self) -> bool:
@@ -97,7 +92,7 @@ class GripperController:
         if self.state in [GripperState.OPEN, GripperState.OPENING]:
             self.state = GripperState.CLOSING
             self.servo_angle = 90
-            self.grip_force = 85  # 85% force
+            self.grip_force = 85 
             self.state = GripperState.CLOSED
             return True
         return False
@@ -114,7 +109,6 @@ class GripperController:
     
     def detect_object(self) -> bool:
         """Use proximity sensors to detect object in gripper"""
-        # Simulated object detection
         return self.object_detected
     
     def set_detection(self, detected: bool):
@@ -129,22 +123,19 @@ class FlightController:
         self.velocity = Position3D(0, 0, 0)
         self.state = DroneState.IDLE
         self.battery_percent = 100
-        self.max_speed = 5.0  # m/s
-        self.cruise_altitude = 1.5  # meters
+        self.max_speed = 5.0  
+        self.cruise_altitude = 1.5 
         
-        # Subsystems
         self.sensors = SensorArray()
         self.gripper = GripperController()
-        
-        # Mission data
+
         self.home_position = Position3D(0, 0, 0)
         self.target_position = None
         self.mission_waypoints: List[Position3D] = []
         self.current_waypoint_index = 0
         
-        # Flight control
-        self.max_lean_angle = 45.0  # degrees
-        self.update_rate = 50  # Hz
+        self.max_lean_angle = 45.0 
+        self.update_rate = 50 
         self.is_running = False
     
     def arm(self) -> bool:
@@ -186,25 +177,22 @@ class FlightController:
         return False
     
     def execute_movement(self, direction: Tuple[float, float, float], speed: float):
-        """Execute movement with safety checks"""
-        # Check for obstacles ahead
+        """Execute movement with safety checks"""       
         if self.sensors.detect_collision_ahead(self.position, direction):
-            # Avoid obstacle by changing altitude
             print("[SAFETY] Obstacle detected! Executing avoidance maneuver...")
-            direction = (direction[0], direction[1], -0.5)  # Move up
+            direction = (direction[0], direction[1], -0.5)  
         
-        # Update position
         actual_speed = min(speed, self.max_speed)
         self.velocity.x = direction[0] * actual_speed
         self.velocity.y = direction[1] * actual_speed
         self.velocity.z = direction[2] * actual_speed
         
-        # Update position (simulated)
+
         dt = 1.0 / self.update_rate
         self.position.x += self.velocity.x * dt
         self.position.y += self.velocity.y * dt
         self.position.z += self.velocity.z * dt
-        self.position.z = max(0, self.position.z)  # Prevent going underground
+        self.position.z = max(0, self.position.z)
     
     def update_battery(self):
         """Simulate battery drain"""
@@ -221,7 +209,7 @@ class FlightController:
         print(f"Pickup: {pickup.x:.2f}, {pickup.y:.2f}, {pickup.z:.2f}")
         print(f"Dropoff: {dropoff.x:.2f}, {dropoff.y:.2f}, {dropoff.z:.2f}")
         
-        # Phase 1: Takeoff
+
         print("\n[Phase 1] Taking off...")
         if not self.arm():
             print("ERROR: Cannot arm drone!")
@@ -230,16 +218,16 @@ class FlightController:
             print("ERROR: Cannot takeoff!")
             return
         
-        # Phase 2: Navigate to pickup location
+
         print("\n[Phase 2] Flying to pickup location...")
         self.go_to_position(pickup)
-        time.sleep(2)  # Simulate flight time
+        time.sleep(2)  
         self.position = Position3D(pickup.x, pickup.y, self.cruise_altitude)
         
-        # Phase 3: Descend and grip object
+
         print("\n[Phase 3] Descending to object level...")
         self.position.z = pickup.z
-        self.gripper.set_detection(True)  # Simulate object presence
+        self.gripper.set_detection(True)
         time.sleep(1)
         
         if self.gripper.close():
@@ -248,18 +236,18 @@ class FlightController:
             print("ERROR: Failed to grip object!")
             return
         
-        # Phase 4: Ascend with object
+
         print("\n[Phase 4] Ascending with object...")
         self.position.z = self.cruise_altitude
         time.sleep(1)
         
-        # Phase 5: Navigate to dropoff location
+
         print("\n[Phase 5] Flying to dropoff location...")
         self.go_to_position(dropoff)
-        time.sleep(2)  # Simulate flight time
+        time.sleep(2)  
         self.position = Position3D(dropoff.x, dropoff.y, self.cruise_altitude)
         
-        # Phase 6: Descend and release object
+
         print("\n[Phase 6] Descending to dropoff height...")
         self.position.z = dropoff.z
         time.sleep(1)
@@ -271,14 +259,14 @@ class FlightController:
             print("ERROR: Failed to release object!")
             return
         
-        # Phase 7: Return home
+
         print("\n[Phase 7] Returning to home...")
         self.state = DroneState.RETURNING
         self.go_to_position(self.home_position)
-        time.sleep(2)  # Simulate flight time
+        time.sleep(2)  
         self.position = self.home_position
         
-        # Phase 8: Land
+
         print("\n[Phase 8] Landing...")
         if self.land():
             print("[SUCCESS] Landed safely!")
@@ -288,15 +276,14 @@ class FlightController:
 
 def main():
     """Main execution function"""
-    # Initialize drone
+
     drone = FlightController()
     drone.home_position = Position3D(0, 0, 0)
-    
-    # Define mission
-    pickup_location = Position3D(5.0, 5.0, 0.5)  # 50cm above ground
+
+    pickup_location = Position3D(5.0, 5.0, 0.5) 
     dropoff_location = Position3D(10.0, 10.0, 0.5)
     
-    # Execute mission
+
     drone.autonomous_transport_mission(pickup_location, dropoff_location)
 
 if __name__ == '__main__':
