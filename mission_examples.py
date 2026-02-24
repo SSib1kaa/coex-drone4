@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""COEX Drone 4 - Mission Examples and Use Cases"""
-
 from drone_controller import (
     FlightController, Position3D, DroneState, GripperState
 )
@@ -16,11 +13,9 @@ def example_1_simple_transport():
     drone = FlightController()
     drone.home_position = Position3D(0, 0, 0)
     
-    # Define locations
     warehouse = Position3D(0, 0, 0.5)
     delivery_point = Position3D(20, 15, 0.5)
     
-    # Execute mission
     drone.autonomous_transport_mission(warehouse, delivery_point)
 
 def example_2_multi_pickup():
@@ -34,7 +29,6 @@ def example_2_multi_pickup():
     drone = FlightController()
     drone.home_position = Position3D(0, 0, 0)
     
-    # Define multiple delivery points
     delivery_points = [
         (Position3D(5, 5, 0.5), Position3D(10, 10, 0.5)),
         (Position3D(10, 10, 0.5), Position3D(15, 5, 0.5)),
@@ -45,7 +39,6 @@ def example_2_multi_pickup():
         print(f"\n--- Delivery {idx}/3 ---")
         drone.autonomous_transport_mission(pickup, dropoff)
         
-        # Check battery
         if drone.battery_percent < 20:
             print(f"\nBattery low ({drone.battery_percent:.1f}%). Returning home.")
             break
@@ -60,8 +53,7 @@ def example_3_obstacle_avoidance():
     
     drone = FlightController()
     drone.home_position = Position3D(0, 0, 0)
-    
-    # Simulate obstacles in the environment
+
     from drone_controller import Obstacle
     drone.sensors.obstacles = [
         Obstacle(Position3D(10, 8, 1.0), radius=2.0, danger_level=0.8),
@@ -87,13 +79,11 @@ def example_4_gripper_operations():
     
     drone = FlightController()
     
-    # Demonstrate gripper functions
     print("\nGripper State: OPEN")
     print(f"  Servo Angle: {drone.gripper.servo_angle}°")
     print(f"  Grip Force: {drone.gripper.grip_force}%")
     print(f"  Object Detected: {drone.gripper.detect_object()}")
     
-    # Close gripper
     print("\nClosing gripper...")
     drone.gripper.set_detection(True)
     if drone.gripper.close():
@@ -101,8 +91,7 @@ def example_4_gripper_operations():
         print(f"  Servo Angle: {drone.gripper.servo_angle}°")
         print(f"  Grip Force: {drone.gripper.grip_force}%")
         print(f"  Object Detected: {drone.gripper.detect_object()}")
-    
-    # Open gripper
+
     print("\nOpening gripper...")
     if drone.gripper.open():
         print(f"  State: {drone.gripper.state.name}")
@@ -119,17 +108,15 @@ def example_5_battery_management():
     
     drone = FlightController()
     drone.home_position = Position3D(0, 0, 0)
-    drone.battery_percent = 30  # Start with low battery
+    drone.battery_percent = 30  
     
     print(f"\nInitial Battery: {drone.battery_percent:.1f}%")
     print(f"Home Position: {drone.home_position.x:.1f}, {drone.home_position.y:.1f}")
     
-    # Attempt a mission with low battery
     if drone.arm() and drone.takeoff(1.0):
         print("\nDrone taking off...")
         drone.position = Position3D(0, 0, 1.0)
         
-        # Simulate battery drain
         drone.battery_percent = 15
         drone.update_battery()
         
@@ -153,22 +140,20 @@ def example_6_emergency_procedures():
     
     drone = FlightController()
     drone.home_position = Position3D(0, 0, 0)
-    drone.position = Position3D(15, 15, 5.0)  # Far from home at altitude
+    drone.position = Position3D(15, 15, 5.0)  
     
     print(f"\nDrone Position: {drone.position.x:.1f}, {drone.position.y:.1f}, {drone.position.z:.1f}")
     print(f"Distance from Home: {drone.position.distance_to(drone.home_position):.2f} meters")
     
-    # Simulate emergency
+
     print("\n[EMERGENCY] Motor failure detected!")
     print("Executing emergency descent...")
-    
-    # Open gripper to drop any payload
+
     if drone.gripper.state != GripperState.OPEN:
         drone.gripper.open()
         print("  - Payload released")
-    
-    # Controlled descent
-    descent_rate = 0.5  # m/s
+
+    descent_rate = 0.5 
     while drone.position.z > 0:
         drone.position.z -= descent_rate * 0.1
         if int(drone.position.z * 10) % 10 == 0:
@@ -208,5 +193,4 @@ if __name__ == '__main__':
     print("  5. Battery Management and RTH")
     print("  6. Emergency Procedures")
     
-    # Run example 1 by default
     example_1_simple_transport()
